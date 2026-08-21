@@ -1,4 +1,4 @@
-# BIST & DFT Architectures for 2D Pipelined CNN Convolver (STUMPS vs. RTS)
+# 🔬 Built-In Self-Test (BIST) & DFT Architectures for 2D Pipelined CNN Convolver (STUMPS vs. RTS)
 
 [![Verilog HDL](https://img.shields.io/badge/Language-Verilog%20HDL-blue.svg)](https://en.wikipedia.org/wiki/Verilog)
 [![Field](https://img.shields.io/badge/Field-Design%20for%20Testability%20(DFT)-orange.svg)]()
@@ -6,20 +6,23 @@
 [![Fault Coverage](https://img.shields.io/badge/Fault%20Coverage-100%25-brightgreen.svg)]()
 [![Simulation](https://img.shields.io/badge/Simulation-ModelSim%20%7C%20Questa%20(PLI)-green.svg)]()
 
-This repository contains the complete hardware design, gate-level scan insertion, and comparative evaluation of two major **Built-In Self-Test (BIST)** architectures for a pipelined **2D Convolution Engine (Circuit Under Test - CUT)**:
+This repository presents the complete RTL hardware design, gate-level scan insertion, and comparative analysis of two state-of-the-art **Built-In Self-Test (BIST)** architectures for a high-throughput **2D Pipelined CNN Convolution Core (Circuit Under Test - CUT)**:
 
 1. **RTS BIST** (*Random Test Socket / Reseeded Dynamic Testing*)
 2. **STUMPS BIST** (*Self-Testing Using MISR and Parallel SRSG*)
 
-Both architectures were implemented in synthesizable **Verilog HDL**, synthesized into scan-inserted gate-level netlists, and validated through fault injection simulation via Verilog PLI/VPI in ModelSim/QuestaSim, achieving **100% single stuck-at fault coverage**.
+Both test architectures were designed in synthesizable **Verilog HDL**, synthesized into scan-stitched gate-level netlists, and validated through fault injection via Verilog PLI in ModelSim/QuestaSim, achieving **100% single stuck-at fault coverage**.
 
 ---
 
-## Table of Contents
-- [1. Circuit Under Test (CUT) Specification](#1-circuit-under-test-cut-specification)
-- [2. Design for Testability (DFT) Flow](#2-design-for-testability-dft-flow)
-- [3. BIST Architectures & Theory](#3-bist-architectures--theory)
-  - [A. RTS Architecture](#a-rts-random-test-socket-architecture)
+## 📌 Table of Contents
+- [1. 2D Convolution & Circuit Under Test (CUT)](#1-2d-convolution--circuit-under-test-cut)
+  - [A. Convolution Algorithm & Sliding Window](#a-convolution-algorithm--sliding-window)
+  - [B. Non-Pipelined vs. Pipelined Architecture](#b-non-pipelined-vs-pipelined-architecture)
+  - [C. Pipelined Datapath & Cycle-by-Cycle Operation](#c-pipelined-datapath--cycle-by-cycle-operation)
+- [2. Design for Testability (DFT) & BIST Principles](#2-design-for-testability-dft--bist-principles)
+- [3. BIST Architectures & Implementations](#3-bist-architectures--implementations)
+  - [A. RTS (Random Test Socket) Architecture](#a-rts-random-test-socket-architecture)
   - [B. STUMPS Architecture](#b-stumps-architecture)
 - [4. Finite State Machine (FSM) Test Controller](#4-finite-state-machine-fsm-test-controller)
 - [5. Mathematical Formulations](#5-mathematical-formulations)
@@ -30,89 +33,103 @@ Both architectures were implemented in synthesizable **Verilog HDL**, synthesize
 
 ---
 
-## 1. Circuit Under Test (CUT) Specification
+## 1. 2D Convolution & Circuit Under Test (CUT)
 
-The target CUT is a high-throughput **2D Pipelined Convolution Core** used in Convolutional Neural Networks (CNNs) and digital image processing pipelines.
+### A. Convolution Algorithm & Sliding Window
+Convolutional Neural Networks (CNNs) rely heavily on 2D spatial convolution for feature extraction in image processing. The 2D convolution operation filters an input image matrix using a smaller kernel matrix (weight filter).
 
-```
-       Input Pixels (p1, p2, p3)           Kernel Weights (c11..c33)
-                │                                    │
-                ▼                                    ▼
-       ┌────────────────────────────────────────────────────────┐
-       │   9x Parallel Multipliers (m11 = p1*c11 ... m33)       │
-       └──────────────────────────┬─────────────────────────────┘
-                                  │
-                                  ▼
-       ┌────────────────────────────────────────────────────────┐
-       │   Row Accumulator Stages (row1_final, row2, row3)      │
-       └──────────────────────────┬─────────────────────────────┘
-                                  │
-                                  ▼
-       ┌────────────────────────────────────────────────────────┐
-       │   Final Convolution Adder & Valid_Out Generation       │
-       └────────────────────────────────────────────────────────┘
-```
+A **sliding window** with dimensions matching the kernel ($3 \times 3$) traverses across the image matrix ($5 \times 5$). Starting from the top-left corner, it shifts column-by-column across each row, and then advances row-by-row to generate all receptive field windows (9 total sliding windows for a $5 \times 5$ image with a $3 \times 3$ kernel without padding):
 
-* **Kernel Size:** $3 \times 3$ sliding window.
-* **Input Window:** $5 \times 5$ 2D spatial feature map.
-* **Datapath:** Pipelined multiply-accumulate (MAC) units ($m_{11} \dots m_{33}$), intermediate row summation registers (`row1_final`, `row2_final`, `row3_final`), and a `valid_out` handshake controller.
-* **Scan Insertion:** All sequential elements were replaced with scan flip-flops (Mux-D FF) configured into scan chains.
+<p align="center">
+  <img src="docs/images/sliding_window_traversal.png" alt="Sliding Window Traversal" width="700"/>
+</p>
 
----
+### B. Non-Pipelined vs. Pipelined Architecture
 
-## 2. Design for Testability (DFT) Flow
+#### 1. Non-Pipelined Architecture:
+In a non-pipelined design, each sliding window sub-matrix is multiplied element-wise by the kernel matrix, and all intermediate products are summed simultaneously using a **Binary Tree Adder**:
 
-The test engineering methodology follows a complete standard ASIC/FPGA DFT flow:
+$$
+G = \sum_{i=0}^{m-1} \sum_{j=0}^{n-1} W(i, j) \cdot K(i, j)
+$$
 
-```
-[Behavioral Verilog (convolver.v)]
-               │
-               ▼ Synthesis & Gate-Level Mapping
-[Gate-Level Netlist + Component Library]
-               │
-               ▼ Scan Chain Stitching
-[Scan-Inserted Netlist (top_convolver_net.v)]
-               │
-               ├─────────────────────────┐
-               ▼                         ▼
-   [RTS BIST Wrapper]          [STUMPS BIST Wrapper]
-   - PRPG + SRSG + SISA        - Multi-Chain LFSR + MISR
-   - RTS Controller FSM        - STUMPS Controller FSM
-               │                         │
-               └────────────┬────────────┘
-                            │
-                            ▼ Fault Injection & PLI Simulation
-              [Fault Coverage Report (100%)]
-```
+Where:
+* $K$ represents the kernel weight matrix.
+* $W$ represents the sliding window input matrix.
+* $m$ and $n$ denote the number of rows and columns, respectively.
+
+While functionally straightforward, this approach creates a large combinatorial critical path and requires 81 parallel multiplications with high fan-in adder trees, severely limiting operational clock frequency.
+
+#### 2. Pipelined Architecture (Chosen CUT):
+To maximize throughput and minimize the critical path delay, a **multi-stage pipelined systolic datapath** is implemented. Intermediate results are latched into pipeline registers across successive clock cycles.
 
 ---
 
-## 3. BIST Architectures & Theory
+### C. Pipelined Datapath & Cycle-by-Cycle Operation
+
+The circuit datapath incorporates 9 parallel multiplier units, inter-stage pipeline registers, 3 row accumulator channels, and a 2-stage final adder tree:
+
+<p align="center">
+  <img src="docs/images/pipelined_convolver_datapath.png" alt="Pipelined Convolver Datapath" width="800"/>
+</p>
+
+The cycle-by-cycle execution operates as follows:
+* **Clock Cycle 1:** Multiplies the first column of kernel coefficients with the first column of image pixels across each row ($\text{Pixel}_1 \times \text{Coeff}_{11}$, $\text{Pixel}_2 \times \text{Coeff}_{21}$, $\text{Pixel}_3 \times \text{Coeff}_{31}$) and latches the products into stage-1 registers.
+* **Clock Cycle 2:** Multiplies the second column coefficients with the second column pixels ($\text{Pixel}_1 \times \text{Coeff}_{12}$, $\text{Pixel}_2 \times \text{Coeff}_{22}$, $\text{Pixel}_3 \times \text{Coeff}_{32}$) and accumulates them with the registered previous products.
+* **Clock Cycle 3:** Multiplies the third column coefficients with the third column pixels ($\text{Pixel}_1 \times \text{Coeff}_{13}$, $\text{Pixel}_2 \times \text{Coeff}_{23}$, $\text{Pixel}_3 \times \text{Coeff}_{33}$), completing all three row-wise dot-products in parallel (`row1_final`, `row2_final`, `row3_final`).
+* **Clock Cycle 4:** Sums the accumulated results of Row 1 and Row 2.
+* **Clock Cycle 5:** Adds the intermediate combined sum (Row 1 + Row 2) with the accumulated result of Row 3.
+* **Clock Cycle 6:** The final 2D convolution value is registered, and the `valid_out` handshake signal is asserted.
+
+---
+
+## 2. Design for Testability (DFT) & BIST Principles
+
+As deep-submicron VLSI complexity grows, external Automatic Test Equipment (ATE) costs increase dramatically. **Built-In Self-Test (BIST)** embeds test generation and response analysis directly on-chip, offering two major advantages:
+
+1. **Enhanced Controllability:** The ability to establish specific logic states at internal circuit nodes using on-chip pattern generators.
+2. **Enhanced Observability:** The ability to propagate and observe internal circuit states at primary outputs or compactors.
+
+---
+
+## 3. BIST Architectures & Implementations
 
 ### A. RTS (Random Test Socket) Architecture
-The RTS BIST architecture provides fine-grained controllability and observability for sequential circuits:
-* **PRPG (Pseudo-Random Pattern Generator):** Generates high-entropy pseudo-random vectors for primary inputs.
-* **SRSG (Shift Register Sequence Generator):** Serially shifts test vectors into the internal scan chain.
-* **MISR (Multiple-Input Signature Register):** Compresses primary output responses.
+The RTS BIST architecture provides targeted controllability and observability for sequential circuits with internal scan chains:
+
+<p align="center">
+  <img src="docs/images/rts_bist_architecture.png" alt="RTS BIST Architecture" width="750"/>
+</p>
+
+* **PRPG (Pseudo-Random Pattern Generator):** An autonomous LFSR generating pseudo-random test vectors for primary inputs.
+* **SRSG (Shift Register Sequence Generator):** Shifts serial test patterns into the internal scan chain.
+* **MISR (Multiple-Input Signature Register):** Compresses primary output responses into a compact multi-bit signature.
 * **SISA (Single-Input Signature Analyzer):** Compresses the serial scan-out chain responses.
-* **Target:** Enables dynamic reseeding and targeted pattern generation to detect random-pattern-resistant (RPR) faults.
+* **RTS Controller:** Manages shifting, capture cycles, and signature comparison against pre-computed golden values.
+
+---
 
 ### B. STUMPS Architecture
-The STUMPS (*Self-Testing Using MISR and Parallel SRSG*) architecture is designed to drastically reduce **Test Application Time (TAT)**:
-* **Parallel Scan Chains:** Decomposes the single long scan chain into $K$ balanced parallel scan chains (maximum length $L_{max} = 14$ flip-flops in this design).
-* **Parallel PRPG / Phase Shifter:** An autonomous LFSR feeds all parallel scan inputs simultaneously with de-correlated pseudo-random sequences.
-* **Parallel MISR Compaction:** All parallel scan-out ports feed into a multi-input MISR simultaneously.
-* **Advantage:** Accelerates the test application cycle by over **$2.8\times$** while maintaining identical fault coverage.
+The STUMPS (*Self-Testing Using MISR and Parallel SRSG*) architecture resolves the test time bottleneck of serial scan chains:
+
+<p align="center">
+  <img src="docs/images/stumps_bist_architecture.png" alt="STUMPS BIST Architecture" width="750"/>
+</p>
+
+* **Parallel Scan Chains:** Partitions internal flip-flops into multiple balanced parallel scan chains (maximum length $L_{max} = 14$ flip-flops in this implementation).
+* **Parallel PRPG / Phase Shifter:** An LFSR feeds all parallel scan inputs simultaneously with de-correlated pseudo-random sequences.
+* **Parallel MISR Compaction:** All parallel scan outputs feed into a multi-input MISR simultaneously.
+* **Throughput Benefit:** Reduces shift cycles per pattern from $\approx 40$ down to **14 clock cycles**, speeding up the test routine by over **$2.8\times$**.
 
 ---
 
 ## 4. Finite State Machine (FSM) Test Controller
 
-The test controller autonomously manages test execution phases without requiring external ATE (Automatic Test Equipment):
+The BIST controller finite state machine coordinates test sequence execution:
 
 ```
  ┌─────────┐
- │  RESET  │ ──► Initialize LFSR seeds and reset CUT
+ │  RESET  │ ──► Initialize LFSR/MISR seeds and reset CUT
  └────┬────┘
       │
       ▼
@@ -202,6 +219,12 @@ $$
 .
 ├── .gitignore
 ├── README.md
+├── docs/
+│   └── images/                     # Architecture diagrams and schematics
+│       ├── sliding_window_traversal.png
+│       ├── pipelined_convolver_datapath.png
+│       ├── rts_bist_architecture.png
+│       └── stumps_bist_architecture.png
 ├── RTS/
 │   ├── RTS_Architecture.v          # Top-level RTS BIST wrapper and test harness
 │   ├── RTS_Controller.v            # RTS BIST finite state machine controller
@@ -258,3 +281,9 @@ run -all
 ```
 
 ---
+
+## 9. Author & License
+
+* **Author:** Fateme Ghafel Khasraji
+* **Field:** Hardware Acceleration, Digital RTL Design, SoC Architectures & DFT
+* **License:** This project is licensed under the [MIT License](LICENSE).
