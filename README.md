@@ -1,10 +1,10 @@
-# 🔬 Built-In Self-Test (BIST) & DFT Architectures for 2D Pipelined CNN Convolver (STUMPS vs. RTS)
+# Built-In Self-Test (BIST) & DFT Architectures for 2D Pipelined CNN Convolver (STUMPS vs. RTS)
 
 [![Verilog HDL](https://img.shields.io/badge/Language-Verilog%20HDL-blue.svg)](https://en.wikipedia.org/wiki/Verilog)
 [![Field](https://img.shields.io/badge/Field-Design%20for%20Testability%20(DFT)-orange.svg)]()
 [![Methodology](https://img.shields.io/badge/Methodology-BIST%20%7C%20Scan%20Chains%20%7C%20Fault%20Simulation-purple.svg)]()
 [![Fault Coverage](https://img.shields.io/badge/Fault%20Coverage-100%25-brightgreen.svg)]()
-[![Simulation](https://img.shields.io/badge/Simulation-ModelSim%20%7C%20Questa%20(PLI)-green.svg)]()
+[![Simulation](https://img.shields.io/badge/Simulation-ModelSim%20(PLI)-green.svg)]()
 
 This repository presents the complete RTL hardware design, gate-level scan insertion, and comparative analysis of two state-of-the-art **Built-In Self-Test (BIST)** architectures for a high-throughput **2D Pipelined CNN Convolution Core (Circuit Under Test - CUT)**:
 
@@ -15,7 +15,7 @@ Both test architectures were designed in synthesizable **Verilog HDL**, synthesi
 
 ---
 
-## 📌 Table of Contents
+## Table of Contents
 - [1. 2D Convolution & Circuit Under Test (CUT)](#1-2d-convolution--circuit-under-test-cut)
   - [A. Convolution Algorithm & Sliding Window](#a-convolution-algorithm--sliding-window)
   - [B. Non-Pipelined vs. Pipelined Architecture](#b-non-pipelined-vs-pipelined-architecture)
@@ -274,11 +274,3 @@ vlog ../RTS/component_library.v ../RTS/convolver.v netlist_top_convolver_stumps.
 vsim -pli ../RTS/faultInjection.dll work.STUMPS_Architecture
 run -all
 ```
-
----
-
-## 9. Author & License
-
-* **Author:** Fateme Ghafel Khasraji
-* **Field:** Hardware Acceleration, Digital RTL Design, SoC Architectures & DFT
-* **License:** This project is licensed under the [MIT License](LICENSE).
