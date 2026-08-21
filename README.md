@@ -1,4 +1,4 @@
-# 🔬 BIST & DFT Architectures for 2D Pipelined CNN Convolver (STUMPS vs. RTS)
+# BIST & DFT Architectures for 2D Pipelined CNN Convolver (STUMPS vs. RTS)
 
 [![Verilog HDL](https://img.shields.io/badge/Language-Verilog%20HDL-blue.svg)](https://en.wikipedia.org/wiki/Verilog)
 [![Field](https://img.shields.io/badge/Field-Design%20for%20Testability%20(DFT)-orange.svg)]()
@@ -15,7 +15,7 @@ Both architectures were implemented in synthesizable **Verilog HDL**, synthesize
 
 ---
 
-## 📌 Table of Contents
+## Table of Contents
 - [1. Circuit Under Test (CUT) Specification](#1-circuit-under-test-cut-specification)
 - [2. Design for Testability (DFT) Flow](#2-design-for-testability-dft-flow)
 - [3. BIST Architectures & Theory](#3-bist-architectures--theory)
