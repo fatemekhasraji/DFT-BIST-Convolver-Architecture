@@ -1,0 +1,101 @@
+module convolver(clk,rst,valid_in,
+              pixel_1, pixel_2, pixel_3,
+              coeff_11, coeff_12, coeff_13,
+              coeff_21, coeff_22, coeff_23,
+              coeff_31, coeff_32, coeff_33,
+              valid_out, conv_result);    
+    input clk;
+    input rst;
+    input valid_in;
+    input pixel_1, pixel_2, pixel_3;
+    input coeff_11, coeff_12, coeff_13;
+    input coeff_21, coeff_22, coeff_23;
+    input coeff_31, coeff_32, coeff_33;
+    output reg valid_out;
+    output reg [3:0] conv_result;
+
+    localparam IDLE = 3'b000;
+    localparam MULT_1 = 3'b001;
+    localparam MULT_2 = 3'b010;
+    localparam MULT_3_SUM_1 = 3'b100;
+    localparam SUM_2 = 3'b101;
+    localparam SUM_3 = 3'b110;
+    localparam FINAL_SUM = 3'b111;
+
+    reg [2:0] current_state, next_state;
+    reg [1:0] mult11, mult12, mult13;
+    reg [1:0] mult21, mult22, mult23;
+    reg [1:0] mult31, mult32, mult33;
+    reg [2:0] row11_sum, row21_sum, row31_sum;
+    reg [2:0] row12_sum, row22_sum, row32_sum;
+    reg [3:0] row13_sum;
+    always @(posedge clk or posedge rst) begin
+        if (rst)
+            current_state <= IDLE;
+        else
+            current_state <= next_state;
+    end
+    always @(*) begin
+        case (current_state)
+            IDLE: 
+                next_state = valid_in ? MULT_1 : IDLE;
+            MULT_1:
+                next_state = MULT_2;
+            MULT_2:
+                next_state = MULT_3_SUM_1;
+            MULT_3_SUM_1:
+                next_state = SUM_2;
+            SUM_2:
+                next_state = SUM_3;
+            SUM_3:
+                next_state = FINAL_SUM;
+            FINAL_SUM:
+                next_state = IDLE;
+            default:
+                next_state = IDLE;
+        endcase
+    end
+   always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            valid_out <= 0;
+            conv_result <= 0;
+        end
+        else begin
+            case (current_state)
+                MULT_1: begin
+                    mult11 <= pixel_1 * coeff_11;
+                    mult21 <= pixel_2 * coeff_21;
+                    mult31 <= pixel_3 * coeff_31;
+                    valid_out <= 0;
+                end
+                MULT_2: begin
+                    mult12 <= pixel_1 * coeff_12;
+                    mult22 <= pixel_2 * coeff_22;
+                    mult32 <= pixel_3 * coeff_32;
+                end
+                MULT_3_SUM_1: begin
+                    mult13 <= pixel_1 * coeff_13;
+                    mult23 <= pixel_2 * coeff_23;
+                    mult33 <= pixel_3 * coeff_33;
+                    row11_sum <= mult11 + mult12;
+                    row21_sum <= mult21 + mult22;
+                    row31_sum <= mult31 + mult32;
+                end
+                SUM_2: begin
+                    row12_sum <= row11_sum + mult13;
+                    row22_sum <= row21_sum + mult23;
+                    row32_sum <= row31_sum + mult33;
+                end
+                SUM_3: begin
+                    row13_sum <= row12_sum + row22_sum;
+                end
+                FINAL_SUM: begin
+                    conv_result <= row13_sum + row32_sum;
+                    valid_out <= 1;
+                end
+                default: begin valid_out <= 0;
+                end
+            endcase
+        end
+    end
+endmodule

@@ -1,0 +1,39 @@
+module top_convolver (clk,rst,valid_in,pixel_1,pixel_2,pixel_3,coeff_11, coeff_12,coeff_13,coeff_21,coeff_22,coeff_23,coeff_31,coeff_32,coeff_33,valid_out, conv_result); 
+    input    clk;
+    input    rst;
+    input    valid_in;
+    input    pixel_1;
+    input    pixel_2;
+    input    pixel_3;
+    input    coeff_11;
+    input    coeff_12;
+    input    coeff_13;
+    input    coeff_21;
+    input    coeff_22;
+    input    coeff_23;
+    input    coeff_31;
+    input    coeff_32;
+    input    coeff_33;
+    output   valid_out;
+    output  [3:0]  conv_result;
+    convolver u_convolver (
+        .clk         (clk),
+        .rst         (rst),
+        .valid_in    (valid_in),
+        .pixel_1     (pixel_1),
+        .pixel_2     (pixel_2),
+        .pixel_3     (pixel_3),
+        .coeff_11    (coeff_11),
+        .coeff_12    (coeff_12),
+        .coeff_13    (coeff_13),
+        .coeff_21    (coeff_21),
+        .coeff_22    (coeff_22),
+        .coeff_23    (coeff_23),
+        .coeff_31    (coeff_31),
+        .coeff_32    (coeff_32),
+        .coeff_33    (coeff_33),
+        .valid_out   (valid_out),
+        .conv_result (conv_result)
+    );
+
+endmodule

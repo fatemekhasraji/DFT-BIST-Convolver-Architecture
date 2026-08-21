@@ -1,0 +1,32 @@
+# Reports and documentation in non-English formats
+*.pdf
+*.docx
+*.pptx
+
+# Xilinx ISE / Vivado / EDA intermediate and temporary files
+*.gise
+*.xise
+*.syr
+*.xrpt
+*.ngc
+*.ndf
+*.log
+*.bak
+*.xml
+*.jou
+*.pb
+*.wdb
+webtalk/
+xst/
+_xmsgs/
+
+# ModelSim / Questa temporary files
+work/
+transcript
+*.wlf
+*.vstf
+vsim.wlf
+
+# OS generated files
+Thumbs.db
+.DS_Store

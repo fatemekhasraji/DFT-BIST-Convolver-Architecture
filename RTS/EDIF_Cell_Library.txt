@@ -1,0 +1,33 @@
+//cell LD
+//inputs
+D
+G
+//outputs
+Q
+//equations
+dff(Q, D, G, 1'b0, 1'b0, 1'b1);
+//end cell
+
+//cell LDCP
+//inputs
+CLR
+D
+G
+PRE
+//outputs
+Q
+//equations
+dff(Q, D, G, CLR, PRE, 1'b1);
+//end cell
+
+//cell FDP
+//inputs
+D
+C
+CE
+PRE
+//outputs
+Q
+//equations
+dff(Q, D, C, CE, PRE, 1'b1);
+//end cell
