@@ -242,8 +242,3 @@ run -all
 ```
 
 ---
-
-## 👤 Author
-* **Fateme Ghafel Khasraji**
-* Master of Science in Computer Architecture
-* Focus: Hardware Acceleration, Digital RTL Design, SoC Architectures & DFT
