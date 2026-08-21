@@ -38,11 +38,7 @@ Both test architectures were designed in synthesizable **Verilog HDL**, synthesi
 ### A. Convolution Algorithm & Sliding Window
 Convolutional Neural Networks (CNNs) rely heavily on 2D spatial convolution for feature extraction in image processing. The 2D convolution operation filters an input image matrix using a smaller kernel matrix (weight filter).
 
-A **sliding window** with dimensions matching the kernel ($3 \times 3$) traverses across the image matrix ($5 \times 5$). Starting from the top-left corner, it shifts column-by-column across each row, and then advances row-by-row to generate all receptive field windows (9 total sliding windows for a $5 \times 5$ image with a $3 \times 3$ kernel without padding):
-
-<p align="center">
-  <img src="docs/images/sliding_window_traversal.png" alt="Sliding Window Traversal" width="700"/>
-</p>
+A **sliding window** with dimensions matching the kernel ($3 \times 3$) traverses across the image matrix ($5 \times 5$). Starting from the top-left corner, it shifts column-by-column across each row, and then advances row-by-row to generate all receptive field windows (9 total sliding windows for a $5 \times 5$ image with a $3 \times 3$ kernel without padding).
 
 ### B. Non-Pipelined vs. Pipelined Architecture
 
@@ -221,7 +217,6 @@ $$
 ├── README.md
 ├── docs/
 │   └── images/                     # Architecture diagrams and schematics
-│       ├── sliding_window_traversal.png
 │       ├── pipelined_convolver_datapath.png
 │       ├── rts_bist_architecture.png
 │       └── stumps_bist_architecture.png
