@@ -142,16 +142,32 @@ The test controller autonomously manages test execution phases without requiring
 
 ### 1. LFSR Characteristic Polynomial
 The LFSRs and MISRs are governed by primitive characteristic polynomials over Galois Field $GF(2)$:
-$$P(x) = 1 + \sum_{i=1}^{n} c_i x^i, \quad c_i \in \{0, 1\}$$
+
+$$
+P(x) = 1 + \sum_{i=1}^{n} c_i x^i, \quad c_i \in \{0, 1\}
+$$
 
 ### 2. Signature Compaction (MISR)
 The state of the $n$-bit MISR at clock cycle $t+1$ with parallel input vector $\mathbf{Z}(t) = [z_0(t), z_1(t), \dots, z_{n-1}(t)]$ is defined by:
-$$S(t+1) = \mathbf{T} \cdot S(t) \oplus \mathbf{Z}(t)$$
-Where $\mathbf{T}$ is the companion state-transition matrix. The probability of aliasing (masking an error signature) for an $n$-bit MISR with test length $L \gg n$ asymptotically approaches:
-$$P_{\text{aliasing}} \approx \frac{1}{2^n}$$
+
+$$
+S(t+1) = \mathbf{T} \cdot S(t) \oplus \mathbf{Z}(t)
+$$
+
+Where $\mathbf{T}$ is the companion state-transition matrix.
+
+The probability of aliasing (masking an error signature) for an $n$-bit MISR with test length $L \gg n$ asymptotically approaches:
+
+$$
+P_{\text{aliasing}} \approx \frac{1}{2^n}
+$$
 
 ### 3. Fault Coverage Calculation
-$$\text{Fault Coverage (\%)} = \left( \frac{\text{Number of Detected Faults}}{\text{Total Collapsed Faults}} \right) \times 100\%$$
+The single stuck-at fault coverage is defined as:
+
+$$
+\text{Fault Coverage (\%)} = \left( \frac{\text{Number of Detected Faults}}{\text{Total Collapsed Faults}} \right) \times 100\%
+$$
 
 ---
 
