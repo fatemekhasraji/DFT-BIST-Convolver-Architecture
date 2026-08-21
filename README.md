@@ -70,11 +70,11 @@ The circuit datapath incorporates 9 parallel multiplier units, inter-stage pipel
 </p>
 
 The cycle-by-cycle execution operates as follows:
-* **Clock Cycle 1:** Multiplies the first column of kernel coefficients with the first column of image pixels across each row ($\text{Pixel}_1 \times \text{Coeff}_{11}$, $\text{Pixel}_2 \times \text{Coeff}_{21}$, $\text{Pixel}_3 \times \text{Coeff}_{31}$) and latches the products into stage-1 registers.
-* **Clock Cycle 2:** Multiplies the second column coefficients with the second column pixels ($\text{Pixel}_1 \times \text{Coeff}_{12}$, $\text{Pixel}_2 \times \text{Coeff}_{22}$, $\text{Pixel}_3 \times \text{Coeff}_{32}$) and accumulates them with the registered previous products.
-* **Clock Cycle 3:** Multiplies the third column coefficients with the third column pixels ($\text{Pixel}_1 \times \text{Coeff}_{13}$, $\text{Pixel}_2 \times \text{Coeff}_{23}$, $\text{Pixel}_3 \times \text{Coeff}_{33}$), completing all three row-wise dot-products in parallel (`row1_final`, `row2_final`, `row3_final`).
+* **Clock Cycle 1:** Multiplies the first column of kernel coefficients with the first column of image pixels across each row (`Pixel_1 × Coeff_11`, `Pixel_2 × Coeff_21`, `Pixel_3 × Coeff_31`) and latches the products into stage-1 registers.
+* **Clock Cycle 2:** Multiplies the second column coefficients with the second column pixels (`Pixel_1 × Coeff_12`, `Pixel_2 × Coeff_22`, `Pixel_3 × Coeff_32`) and accumulates them with the registered previous products.
+* **Clock Cycle 3:** Multiplies the third column coefficients with the third column pixels (`Pixel_1 × Coeff_13`, `Pixel_2 × Coeff_23`, `Pixel_3 × Coeff_33`), completing all three row-wise dot-products in parallel (`row1_final`, `row2_final`, `row3_final`).
 * **Clock Cycle 4:** Sums the accumulated results of Row 1 and Row 2.
-* **Clock Cycle 5:** Adds the intermediate combined sum (Row 1 + Row 2) with the accumulated result of Row 3.
+* **Clock Cycle 5:** Adds the intermediate combined sum (`Row 1` + `Row 2`) with the accumulated result of Row 3.
 * **Clock Cycle 6:** The final 2D convolution value is registered, and the `valid_out` handshake signal is asserted.
 
 ---
